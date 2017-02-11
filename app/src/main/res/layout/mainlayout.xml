@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainid"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <SurfaceView
+        android:id="@+id/surfaceid"
+        android:layout_width="320dp"
+        android:layout_height="240dp" />
+    <Spinner
+        android:id="@+id/sp_reso"
+        android:layout_below="@id/surfaceid"
+        android:layout_width="match_parent"
+        android:entries="@array/resolution"
+        android:layout_height="60dp">
+
+    </Spinner>
+
+    <RelativeLayout
+        android:id="@+id/buttonsid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" >
+
+        <Button
+            android:id="@+id/button1"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="37dp"
+            android:layout_alignParentLeft="true"
+            android:text="开始" />
+
+        <Button
+            android:id="@+id/button2"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="37dp"
+            android:layout_alignParentRight="true"
+            android:text="结束" />
+    </RelativeLayout>
+    <EditText
+        android:hint="Input:"
+        android:text="test.mp4"
+        android:id="@+id/input_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <EditText
+        android:hint="Output"
+        android:text="rtmp://192.168.31.208/live/test"
+        android:id="@+id/output_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <Button
+        android:text="start"
+        android:id="@+id/button_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>
