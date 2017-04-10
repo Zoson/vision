@@ -15,6 +15,8 @@ import android.view.SurfaceHolder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by zoson on 4/2/15.
@@ -29,47 +31,63 @@ public class CameraService implements Camera.PreviewCallback{
     int count = 0;
     int frequency = 1;
     boolean if_getImg = false;
-    CatchImageCallback cb;
+    List<CatchImageCallback> cbs;
     HandleBitmapThread handleBitmapThread;
 
-    public CameraService(){
+    public void addListener(CatchImageCallback listeners){
+        cbs.add(listeners);
     }
 
-    public void init(int frequency,CatchImageCallback catchImageCallback,SurfaceHolder surfaceHolder){
+    public boolean rmListeners(CatchImageCallback listener){
+        return cbs.remove(listener);
+    }
+
+    public void notifyListeners(byte[] data){
+        for(int i=0;i<cbs.size();++i){
+            cbs.get(i).getBytes(data);
+        }
+    }
+
+    public void autoFocus(){
+        camera.autoFocus(null);
+    }
+
+
+    public CameraService(){
+        cbs = new LinkedList<CatchImageCallback>();
+    }
+
+
+    public void init(SurfaceHolder surfaceHolder){
         camera = Camera.open(0);
-        parameters = camera.getParameters();
-        parameters.setPreviewSize(352, 288);
-        parameters.setPictureFormat(PixelFormat.JPEG);
-        parameters.setPreviewFormat(PixelFormat.YCbCr_420_SP);
-        camera.setParameters(parameters);
-        width = parameters.getPreviewSize().width;
-        height = parameters.getPreviewSize().height;
         try {
             camera.setPreviewDisplay(surfaceHolder);
         } catch (IOException e) {
             e.printStackTrace();
         }
         imageByte = ("").getBytes();
-        setCallbackForImage(catchImageCallback, frequency);
-        handleBitmapThread = new HandleBitmapThread();
-        handleBitmapThread.start();
     }
 
-    public void startPreview(){
+    public void startPreview(int width,int height){
+        parameters = camera.getParameters();
+        parameters.setPreviewSize(width, height);
+        parameters.setPreviewFrameRate(25);
+        this.width = width;
+        this.height = height;
+        parameters.setPictureFormat(PixelFormat.JPEG);
+        parameters.setPreviewFormat(PixelFormat.YCbCr_420_SP);
+        camera.setParameters(parameters);
+
         handleBitmapThread = new HandleBitmapThread();
         handleBitmapThread.start();
         camera.startPreview();
-        camera.setDisplayOrientation(90);
+        //camera.setDisplayOrientation(90);
         camera.setPreviewCallback(this);
     }
 
-    public void setCallbackForImage(CatchImageCallback cb,int frequency){
-        this.cb =cb;
-        this.frequency = frequency;
-    }
     @Override
     public void onPreviewFrame(final byte[] data, Camera camera) {
-        if (cb == null)return;
+        if (cbs.size() == 0)return;
         if (count == frequency){
             if (handleBitmapThread != null){
                 Message message = handleBitmapThread.handler.obtainMessage();
@@ -82,19 +100,15 @@ public class CameraService implements Camera.PreviewCallback{
         count++;
     }
 
+    public void getResolution(){
+
+    }
+
+
     class HandleBitmapThread extends Thread{
 
         static final int GETDATA = 0x1;
-        Handler handler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what){
-                    case GETDATA:
-                        handleDataToImageByte((byte[]) msg.obj);
-                        break;
-                }
-            }
-        };
+        Handler handler;
 
         public HandleBitmapThread(){
 
@@ -117,11 +131,21 @@ public class CameraService implements Camera.PreviewCallback{
 //            m.setRotate(270);
 //            Bitmap mpp = Bitmap.createBitmap(mp,0,0,width,height,m,true);
 //            imageByte = BitmapToBytes(mpp);
-            cb.getBytes(imageByte);
+            notifyListeners(data);
         }
         @Override
         public void run() {
             Looper.prepare();
+            handler = new Handler(){
+                @Override
+                public void handleMessage(Message msg) {
+                    switch (msg.what){
+                        case GETDATA:
+                            handleDataToImageByte((byte[]) msg.obj);
+                            break;
+                    }
+                }
+            };
             Looper.loop();
         }
     }
